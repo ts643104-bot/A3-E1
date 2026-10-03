@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">A3&amp;E1</string>
+    <string name="title_activity_main">A3&amp;E1</string>
+    <string name="package_name">com.a3e1.misenglish</string>
+    <string name="custom_url_scheme">com.a3e1.misenglish</string>
+</resources>

@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+:root {
+  font-family: 'IBM Plex Sans Arabic', 'DM Sans', sans-serif;
+  color: #203129;
+  background: #fbfcf8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 400;
+  font-size: 14px;
+  font-feature-settings: 'kern';
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; min-height: 100%; background: #fbfcf8; }
+body { min-width: 320px; min-height: 100vh; margin: 0; }
+button { font-family: inherit; }
+::selection { color: #1e302b; background: #d9edb6; }
+:focus-visible { outline: 2px solid #779951; outline-offset: 3px; }
+
+#root { min-height: 100vh; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
