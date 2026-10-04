@@ -20,19 +20,21 @@ jobs:
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
     steps:
       - name: Check out source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
 
-      - name: Set up JDK
-        uses: actions/setup-java@v5
+      # JDK 21 is required: capacitor.build.gradle compiles with JavaVersion.VERSION_21
+      - name: set up JDK
+        uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '21'
+          cache: gradle
 
       - name: Install Android SDK packages
         run: |
@@ -55,16 +57,18 @@ jobs:
           npm run lint
           npm run android:sync
 
-      - name: Build debug APK
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        working-directory: android
+
+      - name: Build with Gradle
         run: |
-          set -euo pipefail
-          chmod +x gradlew
           set +e
-          ./gradlew --no-daemon :app:assembleDebug --stacktrace --info > ../gradle-build.log 2>&1
+          ./gradlew assembleDebug --stacktrace --info > ../gradle-build.log 2>&1
           code=$?
           set -e
           echo "gradle_exit=$code"
-          msg="$(grep -m 40 -A 3 -E '^\* (What went wrong|Try:|Exception is)|FAILURE:|error:|Execution failed for task|Caused by:' ../gradle-build.log | head -c 1500)"
+          msg="$(grep -m 40 -A 3 -E '^\* (What went wrong|Try:|Exception is)|FAILURE:|Execution failed for task|Caused by:' ../gradle-build.log | head -c 2000)"
           echo "::error title=Gradle failed::$(echo "$msg" | tr '\n' ' ')"
           echo '## Gradle failure' >> "$GITHUB_STEP_SUMMARY"
           printf '```\n%s\n```\n' "$msg" >> "$GITHUB_STEP_SUMMARY"
@@ -79,36 +83,20 @@ jobs:
           path: gradle-build.log
           if-no-files-found: ignore
 
-      - name: Locate and stage APK
+      - name: Prepare APK asset
         run: |
           set -euo pipefail
-          summary_file="${GITHUB_STEP_SUMMARY:-/dev/null}"
-          echo '## APK output discovery' | tee -a "$summary_file"
-          echo "Workspace: $GITHUB_WORKSPACE" | tee -a "$summary_file"
-          find "$GITHUB_WORKSPACE" -type f -name '*.apk' -print | tee /tmp/a3e1-apk-paths.txt
-          cat /tmp/a3e1-apk-paths.txt | tee -a "$summary_file"
-          apk_path="$(head -n 1 /tmp/a3e1-apk-paths.txt)"
-          if [ -z "$apk_path" ]; then
-            echo 'No APK file was generated anywhere in the workspace.' | tee -a "$summary_file"
-            output_dirs="$(find "$GITHUB_WORKSPACE/android" -type d -name outputs -print | paste -sd ',' -)"
-            echo "::error title=APK output not found::workspace=$GITHUB_WORKSPACE; outputs=${output_dirs:-none}; files=$(find "$GITHUB_WORKSPACE/android" -maxdepth 3 -type f -name '*.apk' -print | paste -sd ',' -)"
+          apk="android/app/build/outputs/apk/debug/app-debug.apk"
+          if [ ! -f "$apk" ]; then
+            echo "::error title=APK not found::expected $apk"
             exit 1
           fi
           mkdir -p release
-          cp -- "$apk_path" "$GITHUB_WORKSPACE/release/A3E1-${VERSION_NAME}.apk"
-          ls -l "$GITHUB_WORKSPACE/release/A3E1-${VERSION_NAME}.apk" | tee -a "$summary_file"
-
-      - name: Summarize Gradle failure
-        if: failure()
-        run: |
-          summary_file="${GITHUB_STEP_SUMMARY:-/dev/null}"
-          if [ -f android/gradle-build.log ]; then
-            echo '## Gradle build diagnostics' >> "$summary_file"
-            tail -n 100 android/gradle-build.log >> "$summary_file"
-          fi
+          cp "$apk" "release/A3E1-${VERSION_NAME}.apk"
+          ls -l "release/A3E1-${VERSION_NAME}.apk"
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: A3E1-APK-${{ env.VERSION_NAME }}
           path: release/*.apk
