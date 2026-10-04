@@ -52,14 +52,19 @@ jobs:
 
       - name: Locate and stage APK
         run: |
-          apk_path="$(find android -type f -name '*.apk' -print -quit)"
+          set -euxo pipefail
+          echo '## APK output discovery' >> "$GITHUB_STEP_SUMMARY"
+          echo "Workspace: $GITHUB_WORKSPACE" >> "$GITHUB_STEP_SUMMARY"
+          find "$GITHUB_WORKSPACE" -type f -name '*.apk' -print | tee /tmp/a3e1-apk-paths.txt
+          cat /tmp/a3e1-apk-paths.txt >> "$GITHUB_STEP_SUMMARY"
+          apk_path="$(head -n 1 /tmp/a3e1-apk-paths.txt)"
           if [ -z "$apk_path" ]; then
-            echo 'No APK file was generated under android/.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'No APK file was generated anywhere in the workspace.' >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
           mkdir -p release
-          cp "$apk_path" "release/A3E1-${VERSION_NAME}.apk"
-          echo "APK generated at: $apk_path" >> "$GITHUB_STEP_SUMMARY"
+          cp -- "$apk_path" "$GITHUB_WORKSPACE/release/A3E1-${VERSION_NAME}.apk"
+          ls -l "$GITHUB_WORKSPACE/release/A3E1-${VERSION_NAME}.apk"
 
       - name: Summarize Gradle failure
         if: failure()
