@@ -7,9 +7,10 @@ android {
         applicationId "com.a3e1.misenglish"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // Version values come from -P flags (or env) with a safe fallback, never null.
-        versionCode (project.hasProperty('VERSION_CODE') ? project.property('VERSION_CODE') : (System.getenv('VERSION_CODE') ?: '1')).toInteger()
-        versionName (project.hasProperty('VERSION_NAME') && project.property('VERSION_NAME') ? project.property('VERSION_NAME').toString() : (System.getenv('VERSION_NAME') ?: '1.0')).toString().replaceFirst('^v', '')
+        // Fixed, non-null values: dynamic version injection via env/property caused a null-value
+        // failure while AGP evaluated this module on CI.
+        versionCode 1
+        versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
