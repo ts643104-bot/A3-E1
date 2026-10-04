@@ -59,7 +59,14 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x gradlew
-          ./gradlew --no-daemon :app:assembleDebug --stacktrace --info 2>&1 | tee gradle-build.log
+          set +e
+          ./gradlew --no-daemon :app:assembleDebug --stacktrace --info > ../gradle-build.log 2>&1
+          code=$?
+          set -e
+          echo "gradle_exit=$code"
+          echo '## Gradle build log (last 80 lines)' >> "$GITHUB_STEP_SUMMARY"
+          tail -n 80 ../gradle-build.log >> "$GITHUB_STEP_SUMMARY"
+          exit $code
         working-directory: android
 
       - name: Locate and stage APK
