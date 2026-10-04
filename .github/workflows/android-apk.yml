@@ -69,7 +69,7 @@ jobs:
           code=$?
           set -e
           echo "gradle_exit=$code"
-          msg="$(grep -m 40 -A 3 -E '^\* (What went wrong|Try:|Exception is)|FAILURE:|Execution failed for task|Caused by:' ../gradle-build.log | head -c 2000)"
+          msg="$(tail -n 40 ../gradle-build.log)"
           echo "::error title=Gradle failed::$(echo "$msg" | tr '\n' ' ')"
           echo '## Gradle failure' >> "$GITHUB_STEP_SUMMARY"
           printf '```\n%s\n```\n' "$msg" >> "$GITHUB_STEP_SUMMARY"
