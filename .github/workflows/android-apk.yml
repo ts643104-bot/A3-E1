@@ -12,6 +12,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     env:
       VERSION_CODE: ${{ github.run_number }}
       VERSION_NAME: ${{ github.ref_type == 'tag' && github.ref_name || format('0.1.{0}', github.run_number) }}
@@ -33,26 +34,35 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Verify Android SDK
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
         run: |
-          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          set -euo pipefail
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          printf 'sdk.dir=%s\n' "$ANDROID_HOME" > android/local.properties
 
       - name: Install JavaScript dependencies
         run: npm ci
 
       - name: Lint and sync native project
         run: |
+          set -euo pipefail
           npm run lint
           npm run android:sync
 
       - name: Build debug APK
-        run: bash gradlew --no-daemon :app:assembleDebug --stacktrace 2>&1 | tee gradle-build.log
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:assembleDebug --stacktrace --info 2>&1 | tee gradle-build.log
         working-directory: android
 
       - name: Locate and stage APK
         run: |
-          set -eo pipefail
+          set -euo pipefail
           summary_file="${GITHUB_STEP_SUMMARY:-/dev/null}"
           echo '## APK output discovery' | tee -a "$summary_file"
           echo "Workspace: $GITHUB_WORKSPACE" | tee -a "$summary_file"
