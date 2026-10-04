@@ -47,8 +47,16 @@ jobs:
           npm run android:sync
 
       - name: Build debug APK
-        run: bash gradlew --no-daemon assembleDebug
+        run: bash gradlew --no-daemon assembleDebug --stacktrace 2>&1 | tee gradle-build.log
         working-directory: android
+
+      - name: Summarize Gradle failure
+        if: failure()
+        run: |
+          if [ -f android/gradle-build.log ]; then
+            echo '## Gradle build diagnostics' >> "$GITHUB_STEP_SUMMARY"
+            tail -n 100 android/gradle-build.log >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Prepare APK asset
         run: |
