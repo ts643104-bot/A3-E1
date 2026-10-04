@@ -69,6 +69,14 @@ jobs:
           exit $code
         working-directory: android
 
+      - name: Upload Gradle log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-log-${{ github.run_number }}
+          path: gradle-build.log
+          if-no-files-found: ignore
+
       - name: Locate and stage APK
         run: |
           set -euo pipefail
