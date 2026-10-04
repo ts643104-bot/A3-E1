@@ -47,7 +47,7 @@ jobs:
           npm run android:sync
 
       - name: Build debug APK
-        run: bash gradlew --no-daemon assembleDebug --stacktrace 2>&1 | tee gradle-build.log
+        run: bash gradlew --no-daemon :app:assembleDebug --stacktrace 2>&1 | tee gradle-build.log
         working-directory: android
 
       - name: Locate and stage APK
@@ -61,6 +61,8 @@ jobs:
           apk_path="$(head -n 1 /tmp/a3e1-apk-paths.txt)"
           if [ -z "$apk_path" ]; then
             echo 'No APK file was generated anywhere in the workspace.' | tee -a "$summary_file"
+            output_dirs="$(find "$GITHUB_WORKSPACE/android" -type d -name outputs -print | paste -sd ',' -)"
+            echo "::error title=APK output not found::workspace=$GITHUB_WORKSPACE; outputs=${output_dirs:-none}; files=$(find "$GITHUB_WORKSPACE/android" -maxdepth 3 -type f -name '*.apk' -print | paste -sd ',' -)"
             exit 1
           fi
           mkdir -p release
