@@ -64,8 +64,10 @@ jobs:
           code=$?
           set -e
           echo "gradle_exit=$code"
-          echo '## Gradle build log (last 80 lines)' >> "$GITHUB_STEP_SUMMARY"
-          tail -n 80 ../gradle-build.log >> "$GITHUB_STEP_SUMMARY"
+          msg="$(grep -m 40 -A 3 -E '^\* (What went wrong|Try:|Exception is)|FAILURE:|error:|Execution failed for task|Caused by:' ../gradle-build.log | head -c 1500)"
+          echo "::error title=Gradle failed::$(echo "$msg" | tr '\n' ' ')"
+          echo '## Gradle failure' >> "$GITHUB_STEP_SUMMARY"
+          printf '```\n%s\n```\n' "$msg" >> "$GITHUB_STEP_SUMMARY"
           exit $code
         working-directory: android
 
